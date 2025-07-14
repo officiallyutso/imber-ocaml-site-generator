@@ -1,0 +1,7 @@
+# C:\Users\UTSO\AppData\Local\opam\default\bin\dune.exe init project imber --kind=executable
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location:
+# C:\Users\UTSO\AppData\Local\Microsoft\Windows\INetCache\dune\db
+# Workspace root: "D:\\projects\\ocaml\\imber\\Imber-ocaml\\imber"
+# Auto-detected concurrency: 16
