@@ -102,12 +102,12 @@ let parse_content file_path content_dir =
         file_path
     in
     
-    (* Use try-catch to handle Pcre.extract Not_found exception *)
     try
       match Pcre.extract ~rex:frontmatter_regex content_text with
       | [| _; frontmatter_str; body |] ->
           Printf.printf "Found frontmatter in %s\n" (Filename.basename file_path);
           let frontmatter = parse_frontmatter frontmatter_str in
+          (* Process Mermaid blocks first, then convert to HTML *)
           let processed_body = Mermaid.process_mermaid_blocks body in
           let html = Omd.of_string processed_body |> Omd.to_html in
           let slug = Filename.basename file_path |> Filename.remove_extension in
@@ -120,9 +120,9 @@ let parse_content file_path content_dir =
             relative_path;
           }
       | _ ->
-          (* Fallback if extraction doesn't match expected pattern *)
           Printf.printf "Unexpected frontmatter pattern in %s\n" (Filename.basename file_path);
-          let html = Omd.of_string content_text |> Omd.to_html in
+          let processed_body = Mermaid.process_mermaid_blocks content_text in
+          let html = Omd.of_string processed_body |> Omd.to_html in
           let slug = Filename.basename file_path |> Filename.remove_extension in
           {
             frontmatter = {
@@ -138,9 +138,9 @@ let parse_content file_path content_dir =
           }
     with
     | Not_found ->
-        (* No frontmatter found, treat entire content as body *)
         Printf.printf "No frontmatter in %s, treating as plain markdown\n" (Filename.basename file_path);
-        let html = Omd.of_string content_text |> Omd.to_html in
+        let processed_body = Mermaid.process_mermaid_blocks content_text in
+        let html = Omd.of_string processed_body |> Omd.to_html in
         let slug = Filename.basename file_path |> Filename.remove_extension in
         {
           frontmatter = {

@@ -1,0 +1,17 @@
+# C:\Users\UTSO\AppData\Local\opam\default\bin\dune.exe exec -- imber serve
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location:
+# C:\Users\UTSO\AppData\Local\Microsoft\Windows\INetCache\dune\db
+# Workspace root: "D:\\projects\\ocaml\\imber\\Imber-ocaml\\imber"
+# Auto-detected concurrency: 16
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ C:\Users\UTSO\AppData\Local\opam\default\bin\ocamlc.opt.exe -config > C:\Users\UTSO\AppData\Local\Temp\dune_a3cadd_output

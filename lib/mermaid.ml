@@ -1,6 +1,6 @@
 open Re
 
-let mermaid_regex = Pcre.regexp ~flags:[`MULTILINE; `DOTALL] {|``````|}
+let mermaid_regex = Pcre.regexp ~flags:[`MULTILINE; `DOTALL] {|```mermaid\n(.*?)\n```|}
 
 let process_mermaid_blocks content =
   let replace_mermaid matched =
@@ -26,16 +26,18 @@ let add_mermaid_script html =
         theme: 'default',
         securityLevel: 'loose',
     });
-</script>
-</head>|} in
+</script>|} in
   
-  String.split_on_char '\n' html
-  |> List.map (fun line ->
-      if String.contains line ' ' && 
+  if String.contains html '<' && String.contains html '>' then
+    let lines = String.split_on_char '\n' html in
+    List.map (fun line ->
+      if String.contains line '<' && 
          let trimmed = String.trim line in
          String.length trimmed >= 7 && 
-         String.sub trimmed 0 7 = "</head>" then
+         String.sub trimmed 0 7 = "</body>" then
         String.concat "\n" [mermaid_script; line]
       else
-        line)
-  |> String.concat "\n"
+        line) lines
+    |> String.concat "\n"
+  else
+    html
