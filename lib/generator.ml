@@ -1,4 +1,8 @@
-open Lwt.Syntax
+let write_all path content =
+  let oc = open_out path in
+  Fun.protect ~finally:(fun () -> close_out oc) (fun () ->
+    output_string oc content
+  )
 
 let ensure_dir_exists dir =
   if not (Sys.file_exists dir) then
@@ -29,7 +33,7 @@ let generate_page content config =
       ensure_dir_exists output_dir;
       
       let output_path = Filename.concat output_dir (content.slug ^ ".html") in
-      Out_channel.write_all output_path html;
+      write_all output_path html;
       Printf.printf "Generated: %s\n" output_path
   | None ->
       Printf.eprintf "Template not found: %s\n" layout
@@ -78,14 +82,59 @@ let build_site config =
   
   Printf.printf "Site built successfully in %s!\n" config.build.output_dir
 
-let serve_site config =
-  Printf.printf "Starting development server on Imber...\n";
-  Printf.printf "Server running at http://%s:%d\n" config.Config.server.host config.server.port;
-  Printf.printf "Press Ctrl+C to stop\n";
-  
-  (* Simple file serving - in a real implementation, you'd use cohttp-lwt-unix *)
-  let rec serve_loop () =
-    Unix.sleep 1;
-    serve_loop ()
+open Lwt.Syntax
+open Cohttp_lwt_unix
+
+let serve_file_from_dist dist_dir uri =
+  let file_path =
+    if uri = "/" then
+      Filename.concat dist_dir "index.html"
+    else
+      let path = String.sub uri 1 (String.length uri - 1) in
+      if Filename.extension path = "" then
+        Filename.concat dist_dir (path ^ ".html")
+      else
+        Filename.concat dist_dir path
   in
-  serve_loop ()
+  
+  if Sys.file_exists file_path then
+    let* content = Lwt_io.with_file ~mode:Input file_path Lwt_io.read in
+    let content_type =
+      match Filename.extension file_path with
+      | ".css" -> "text/css"
+      | ".js" -> "text/javascript"
+      | ".png" -> "image/png"
+      | ".jpg" | ".jpeg" -> "image/jpeg"
+      | ".gif" -> "image/gif"
+      | ".svg" -> "image/svg+xml"
+      | _ -> "text/html"
+    in
+    let headers = Cohttp.Header.init_with "content-type" content_type in
+    let response = Cohttp.Response.make ~status:`OK ~headers () in
+    Lwt.return (response, `String content)
+  else
+    let headers = Cohttp.Header.init_with "content-type" "text/html" in
+    let response = Cohttp.Response.make ~status:`Not_found ~headers () in
+    Lwt.return (response, `String "404 Not Found")
+
+
+let serve_site config =
+  Printf.printf "🚀 Starting development server...\n";
+  flush_all ();
+  Printf.printf "Server running at http://%s:%d\n" config.Config.server.host config.server.port;
+  flush_all ();
+  Printf.printf "Press Ctrl+C to stop\n";
+  flush_all ();
+  
+  let callback _conn req _body =
+    let uri = Uri.path (Cohttp.Request.uri req) in
+    Printf.printf "Serving: %s\n" uri;
+    flush_all ();
+    serve_file_from_dist config.Config.build.output_dir uri
+  in
+  
+  let server = Server.create ~mode:(`TCP (`Port config.server.port))
+    (Server.make ~callback ()) in
+  
+  Lwt_main.run server
+

@@ -1,5 +1,6 @@
 open Re
 
+
 type frontmatter = {
   title: string option;
   date: string option;
@@ -19,7 +20,17 @@ type content = {
   relative_path: string;
 }
 
-let frontmatter_regex = Pcre.regexp ~opts:[`MULTILINE] {|^---\s*\n(.*?)\n---\s*\n(.*)$|}
+(* Updated regex to handle both Unix and Windows line endings *)
+let frontmatter_regex = Pcre.regexp ~flags:[`MULTILINE; `DOTALL] {|^---\s*[\r\n]+(.*?)[\r\n]+---\s*[\r\n]+(.*)$|}
+
+let rec yaml_to_json (yaml_val : Yaml.value) : Yojson.Safe.t =
+  match yaml_val with
+  | `String s -> `String s
+  | `Bool b -> `Bool b
+  | `Float f -> `Float f
+  | `Null -> `Null
+  | `A arr -> `List (List.map yaml_to_json arr)
+  | `O obj -> `Assoc (List.map (fun (k, v) -> (k, yaml_to_json v)) obj)
 
 let parse_frontmatter yaml_str =
   try
@@ -43,14 +54,7 @@ let parse_frontmatter yaml_str =
           | _ -> []
         in
         let metadata = List.map (fun (k, v) -> 
-          let json_v = match v with
-            | `String s -> `String s
-            | `Bool b -> `Bool b
-            | `Float f -> `Float f
-            | `Int i -> `Int i
-            | _ -> `String (Yaml.to_string_exn v)
-          in
-          (k, json_v)
+          (k, yaml_to_json v)
         ) assoc in
         {
           title = get_string "title";
@@ -68,40 +72,89 @@ let parse_frontmatter yaml_str =
       layout = None; draft = false; metadata = [];
     }
 
+let read_all filename =
+  let ic = open_in filename in
+  Fun.protect ~finally:(fun () -> close_in ic) (fun () ->
+    let buffer = Buffer.create 1024 in
+    try
+      while true do
+        let line = input_line ic in
+        Buffer.add_string buffer line;
+        Buffer.add_char buffer '\n'
+      done;
+      Buffer.contents buffer
+    with
+    | End_of_file -> Buffer.contents buffer
+  )
+
+let drop_prefix s n =
+  if String.length s <= n then "" 
+  else String.sub s n (String.length s - n)
+
 let parse_content file_path content_dir =
-  let content_text = In_channel.read_all file_path in
-  let relative_path = 
-    if String.starts_with ~prefix:content_dir file_path then
-      String.drop_prefix file_path (String.length content_dir + 1)
-    else
-      file_path
-  in
-  
-  match Pcre.extract ~rex:frontmatter_regex content_text with
-  | [| _; frontmatter_str; body |] ->
-      let frontmatter = parse_frontmatter frontmatter_str in
-      let html = Omd.of_string body |> Omd.to_html in
-      let slug = Filename.basename file_path |> Filename.remove_extension in
-      {
-        frontmatter;
-        body;
-        html;
-        slug;
-        path = file_path;
-        relative_path;
-      }
-  | _ ->
-      (* No frontmatter, treat entire content as body *)
-      let html = Omd.of_string content_text |> Omd.to_html in
-      let slug = Filename.basename file_path |> Filename.remove_extension in
-      {
-        frontmatter = {
-          title = None; date = None; author = None; tags = [];
-          layout = None; draft = false; metadata = [];
-        };
-        body = content_text;
-        html;
-        slug;
-        path = file_path;
-        relative_path;
-      }
+  try
+    let content_text = read_all file_path in
+    let relative_path =
+      if String.length file_path > String.length content_dir && 
+         String.sub file_path 0 (String.length content_dir) = content_dir then
+        drop_prefix file_path (String.length content_dir + 1)
+      else
+        file_path
+    in
+    
+    (* Use try-catch to handle Pcre.extract Not_found exception *)
+    try
+      match Pcre.extract ~rex:frontmatter_regex content_text with
+      | [| _; frontmatter_str; body |] ->
+          Printf.printf "Found frontmatter in %s\n" (Filename.basename file_path);
+          let frontmatter = parse_frontmatter frontmatter_str in
+          let processed_body = Mermaid.process_mermaid_blocks body in
+          let html = Omd.of_string processed_body |> Omd.to_html in
+          let slug = Filename.basename file_path |> Filename.remove_extension in
+          {
+            frontmatter;
+            body;
+            html;
+            slug;
+            path = file_path;
+            relative_path;
+          }
+      | _ ->
+          (* Fallback if extraction doesn't match expected pattern *)
+          Printf.printf "Unexpected frontmatter pattern in %s\n" (Filename.basename file_path);
+          let html = Omd.of_string content_text |> Omd.to_html in
+          let slug = Filename.basename file_path |> Filename.remove_extension in
+          {
+            frontmatter = {
+              title = Some (String.capitalize_ascii slug);
+              date = None; author = None; tags = [];
+              layout = Some "default"; draft = false; metadata = [];
+            };
+            body = content_text;
+            html;
+            slug;
+            path = file_path;
+            relative_path;
+          }
+    with
+    | Not_found ->
+        (* No frontmatter found, treat entire content as body *)
+        Printf.printf "No frontmatter in %s, treating as plain markdown\n" (Filename.basename file_path);
+        let html = Omd.of_string content_text |> Omd.to_html in
+        let slug = Filename.basename file_path |> Filename.remove_extension in
+        {
+          frontmatter = {
+            title = Some (String.capitalize_ascii slug);
+            date = None; author = None; tags = [];
+            layout = Some "default"; draft = false; metadata = [];
+          };
+          body = content_text;
+          html;
+          slug;
+          path = file_path;
+          relative_path;
+        }
+  with
+  | Sys_error msg ->
+      Printf.eprintf "Error reading file %s: %s\n" file_path msg;
+      failwith ("Failed to read file: " ^ file_path)
