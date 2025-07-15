@@ -1,4 +1,3 @@
-open Re
 
 type template_context = (string * string) list
 
@@ -6,33 +5,70 @@ let mustache_regex = Pcre.regexp {|\{\{([^}]+)\}\}|}
 let conditional_regex = Pcre.regexp {|\{\{#if\s+([^}]+)\}\}(.*?)\{\{/if\}\}|}
 let loop_regex = Pcre.regexp {|\{\{#([^}]+)\}\}(.*?)\{\{/\1\}\}|}
 
+let safe_assoc key context =
+  try List.assoc key context with Not_found -> ""
+
 let render_template template context =
   let replace_var matched =
-    let var_name = String.trim (Pcre.get_substring matched 1) in
-    match List.assoc_opt var_name context with
-    | Some value -> value
-    | None -> ""
+    try
+      let substrings = Pcre.exec ~rex:mustache_regex matched in
+      let var_name = String.trim (Pcre.get_substring substrings 1) in
+      let value = safe_assoc var_name context in
+      value
+    with
+    | Not_found -> matched
   in
   
   (* Handle conditionals *)
   let handle_conditionals text =
-    Pcre.substitute ~rex:conditional_regex text ~subst:(fun matched ->
-      let condition = String.trim (Pcre.get_substring matched 1) in
-      let content = Pcre.get_substring matched 2 in
-      match List.assoc_opt condition context with
-      | Some "true" | Some _ -> content
-      | None -> ""
-    )
+    let rec process_text input =
+      try
+        let substrings = Pcre.exec ~rex:conditional_regex input in
+        let condition = String.trim (Pcre.get_substring substrings 1) in
+        let content = Pcre.get_substring substrings 2 in
+        let replacement =
+          let condition_value = safe_assoc condition context in
+          if condition_value <> "" then content else ""
+        in
+        let (before_match, after_match) = Pcre.get_substring_ofs substrings 0 in
+        let prefix = String.sub input 0 before_match in
+        let suffix = String.sub input after_match (String.length input - after_match) in
+        process_text (prefix ^ replacement ^ suffix)
+      with
+      | Not_found -> input
+    in
+    process_text text
   in
   
   (* Handle basic variable substitution *)
   let final_text = handle_conditionals template in
-  Pcre.substitute ~rex:mustache_regex ~subst:replace_var final_text
+  let substituted = Pcre.substitute ~rex:mustache_regex ~subst:replace_var final_text in
+  
+  (* Add Mermaid support if content includes diagrams *)
+  if String.contains substituted '"' && String.contains substituted 'm' then
+    Mermaid.add_mermaid_script substituted
+  else
+    substituted
+
+let read_all filename =
+  let ic = open_in filename in
+  Fun.protect ~finally:(fun () -> close_in ic) (fun () ->
+    let buffer = Buffer.create 1024 in
+    try
+      while true do
+        let line = input_line ic in
+        Buffer.add_string buffer line;
+        Buffer.add_char buffer '\n'
+      done;
+      Buffer.contents buffer
+    with
+    | End_of_file -> Buffer.contents buffer
+  )
 
 let load_template template_dir layout =
   let template_path = Filename.concat template_dir (layout ^ ".html") in
   try
-    Some (In_channel.read_all template_path)
+    Some (read_all template_path)
   with
   | Sys_error _ -> None
 
@@ -52,7 +88,7 @@ let create_context content site_config =
   let tags_context = [("tags", String.concat ", " content.frontmatter.tags)] in
   
   (* Add custom metadata from frontmatter *)
-  let metadata_context = 
+  let metadata_context =
     List.map (fun (k, v) -> (k, Yojson.Safe.to_string v)) content.frontmatter.metadata
   in
   

@@ -1,4 +1,5 @@
 open Yojson.Safe
+open Yojson.Safe.Util
 
 type site_config = {
   title: string;
