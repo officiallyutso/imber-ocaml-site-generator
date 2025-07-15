@@ -1,6 +1,6 @@
 (lang dune 3.19)
 (name imber)
-(version 1.0.0)
+(version 1.0.1)
 (generate_opam_files true)
 
 (source
