@@ -44,11 +44,15 @@ let render_template template context =
   let final_text = handle_conditionals template in
   let substituted = Pcre.substitute ~rex:mustache_regex ~subst:replace_var final_text in
   
-  (* Add Mermaid support if content includes diagrams *)
-  if String.contains substituted '"' && String.contains substituted 'm' then
+  (* Add Mermaid script if content contains mermaid diagrams *)
+  let content_value = safe_assoc "content" context in
+  if String.contains content_value 'm' && String.contains content_value 'e' && 
+     String.contains content_value 'r' && String.contains content_value 'a' then
     Mermaid.add_mermaid_script substituted
   else
     substituted
+
+
 
 let read_all filename =
   let ic = open_in filename in

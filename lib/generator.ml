@@ -119,7 +119,7 @@ let serve_file_from_dist dist_dir uri =
 
 
 let serve_site config =
-  Printf.printf "🚀 Starting development server...\n";
+  Printf.printf "Starting development server...\n";
   flush_all ();
   Printf.printf "Server running at http://%s:%d\n" config.Config.server.host config.server.port;
   flush_all ();

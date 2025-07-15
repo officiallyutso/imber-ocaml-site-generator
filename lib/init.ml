@@ -41,8 +41,10 @@ let default_template = {|<!DOCTYPE html>
     <title>{{title}} - {{site_title}}</title>
     <meta name="description" content="{{site_description}}">
     <link rel="stylesheet" href="/style.css">
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-github.min.css" rel="stylesheet">
     <style>
-        /* Mermaid diagram styling */
         .mermaid {
             text-align: center;
             margin: 2rem 0;
@@ -50,6 +52,16 @@ let default_template = {|<!DOCTYPE html>
             padding: 1rem;
             border-radius: 8px;
             border: 1px solid #e1e1e1;
+        }
+        /* Enhanced code block styling */
+        pre[class*="language-"] {
+            margin: 1.5rem 0;
+            border-radius: 8px;
+            border: 1px solid #e1e1e1;
+        }
+        code[class*="language-"] {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -84,6 +96,8 @@ let default_template = {|<!DOCTYPE html>
             <p>&copy; 2025 {{site_title}}. Built with <a href="https://github.com/yourusername/imber">Imber</a>.</p>
         </div>
     </footer>
+    
+    <!-- Mermaid.js for diagrams -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
     <script>
         mermaid.initialize({
@@ -92,8 +106,17 @@ let default_template = {|<!DOCTYPE html>
             securityLevel: 'loose',
         });
     </script>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script>
+        // Initialize Prism.js for syntax highlighting
+        Prism.highlightAll();
+    </script>
 </body>
 </html>|}
+
 
 let modern_css = {|/* Modern Imber Styles */
 :root {
@@ -474,7 +497,6 @@ Markdown is easy to write and read. Here are some examples:
 - **Bold text** for emphasis
 - *Italic text* for style
 - `Code snippets` for technical content
-- ~~Strikethrough~~ for corrections
 
 ### Sample Flowchart
 
