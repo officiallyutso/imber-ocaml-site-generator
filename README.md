@@ -342,6 +342,125 @@ project/
     └── static files...
 ```
 
+---
+
+## Development Setup
+
+This section is for contributors and developers who want to work on the IMBER project itself.
+
+### Prerequisites for Development
+
+- **OCaml**: Version 4.14.0 or higher
+- **OPAM**: OCaml package manager
+- **Dune**: Build system (version 3.19 or higher)
+- **Git**: For cloning the repository
+
+### Clone and Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/officiallyutso/imber-ocaml-site-generator.git
+cd imber-ocaml-site-generator
+
+# Install dependencies
+opam install . --deps-only
+
+# Build the project
+dune build
+```
+
+### Project Structure
+
+The development structure consists of:
+
+```
+imber-ocaml-site-generator/
+├── lib/                    # Library source files
+│   ├── config.ml          # Configuration management
+│   ├── content.ml         # Content parsing and processing
+│   ├── template.ml        # Template rendering engine
+│   ├── generator.ml       # Site generation and server
+│   ├── mermaid.ml         # Mermaid diagram support
+│   ├── init.ml            # Project initialization
+│   └── dune               # Library build configuration
+├── bin/                   # Binary/executable files
+│   ├── main.ml            # Command-line interface
+│   └── dune               # Binary build configuration
+├── dune-project           # Project configuration
+└── imber.opam            # OPAM package file
+```
+
+### Development Commands
+
+```bash
+# Build the project
+dune build
+
+# Run the executable directly
+dune exec -- imber 
+
+# Clean build artifacts
+dune clean
+
+# Format code
+dune fmt
+
+# Run tests (if available)
+dune runtest
+```
+
+### Testing with a Sample Site
+
+Create a test site to validate your changes:
+
+```bash
+# Create a test directory
+mkdir test-site
+cd test-site
+
+# Initialize a new IMBER project
+dune exec -- imber init my-test-site
+cd my-test-site
+
+# Build the test site
+dune exec -- imber build
+
+# Serve the test site locally
+dune exec -- imber serve
+
+# Clean the test site
+dune exec -- imber clean
+```
+
+### Development Workflow
+
+1. **Make Changes**: Edit the source files in `lib/` or `bin/`
+2. **Build**: Run `dune build` to compile your changes
+3. **Test**: Use the test site to verify functionality
+4. **Debug**: Check console output for errors or warnings
+5. **Iterate**: Repeat the process until satisfied
+
+### Common Development Tasks
+
+| Task | Command |
+|------|---------|
+| Build library | `dune build lib/` |
+| Build binary | `dune build bin/` |
+| Run specific command | `dune exec -- imber ` |
+| Watch for changes | `dune build --watch` |
+| Check syntax | `dune build --dry-run` |
+
+### Troubleshooting Development Issues
+
+- **Dependencies**: Ensure all OPAM packages are installed with `opam install . --deps-only`
+- **Build Errors**: Check that you're using compatible OCaml and Dune versions
+- **Path Issues**: Run commands from the project root directory
+- **Clean Build**: Use `dune clean` if you encounter persistent build issues
+
+This development setup allows you to modify IMBER's source code, test changes locally, and contribute to the project effectively.
+
+---
+
 ## Development Workflow
 
 ### Build Process
