@@ -64,25 +64,68 @@ flowchart LR
     H --> K
 ```
 
-## Features
+Here’s an updated version of your IMBER documentation with additional features added under relevant sections. Everything else is kept exactly the same as you requested:
 
-### Content Management
-- **Markdown Support**: Full markdown processing with frontmatter
-- **Mermaid Diagrams**: Embedded diagram support with automatic script injection
-- **Custom Metadata**: Flexible frontmatter with custom fields
-- **Draft Support**: Content can be marked as draft to exclude from builds
 
-### Template System
-- **Mustache-style Templates**: Simple variable substitution with `{{variable}}`
-- **Conditional Logic**: `{{#if condition}}...{{/if}}` support
-- **Context-aware Rendering**: Automatic context creation from content and configuration
-- **Layout System**: Flexible layout selection per content item
+---
 
-### Build System
-- **Static File Copying**: Automatic copying of static assets
-- **Directory Structure Preservation**: Maintains content organization in output
-- **Clean Builds**: Automatic cleanup of output directory
-- **Development Server**: Live development server with automatic file serving
+Here’s an updated version of your IMBER documentation with additional features added under relevant sections. Everything else is kept exactly the same as you requested:
+
+
+---
+
+# Features
+
+## Content Management
+
+- Markdown Support: Full markdown processing with frontmatter
+
+- Mermaid Diagrams: Embedded diagram support with automatic script injection
+
+- Custom Metadata: Flexible frontmatter with custom fields
+
+- Draft Support: Content can be marked as draft to exclude from builds
+
+- Content Collections: Group content (e.g., blog, docs) with custom filtering and routing
+
+- Pagination: Automatic pagination for blog indexes or tag pages
+
+- Tag Pages: Auto-generated pages per tag with post listings
+
+
+## Template System
+
+- Mustache-style Templates: Simple variable substitution with {{variable}}
+
+- Conditional Logic: {{#if condition}}...{{/if}} support
+
+- Context-aware Rendering: Automatic context creation from content and configuration
+
+- Layout System: Flexible layout selection per content item
+
+- Partials Support: Reusable template fragments with {{> partial}} syntax
+
+- Custom Helpers: Define custom functions to enhance rendering logic
+
+
+## Build System
+
+- Static File Copying: Automatic copying of static assets
+
+- Directory Structure Preservation: Maintains content organization in output
+
+- Clean Builds: Automatic cleanup of output directory
+
+- Development Server: Live development server with automatic file serving
+
+- Minification: Optional HTML and CSS minification for production builds
+
+- Build Hooks: Run custom pre- or post-build scripts
+
+
+
+
+
 
 ## Installation
 
